@@ -1,0 +1,27 @@
+stages:
+  - lint
+  - test
+  - deploy
+
+lint_ansible:
+  stage: lint
+  image: ansible/ansible:latest
+  script:
+    - ansible-lint playbook.yml
+
+test_infrastructure:
+  stage: test
+  image: ansible/ansible:latest
+  script:
+    - ansible-playbook playbook.yml -i inventory.yml --syntax-check
+    - ansible-playbook playbook.yml -i inventory.yml --tags "test"
+  only:
+    - master
+
+deploy_infrastructure:
+  stage: deploy
+  image: ansible/ansible:latest
+  script:
+    - ansible-playbook -u cloud -i inventories/dev/inventory --private-key pkey.txt playbook.yaml
+  only:
+    - master

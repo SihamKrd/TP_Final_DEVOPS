@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>{{ app_name }} SK</title>
+  </head>
+  <body>
+     <h1> Welcome to {{ app_name }} </h1>
+     <p> List of movies to see before the end of the world : </p>
+     <ul>
+{% for movie in app_movies %}
+        <li><b>Title : </b>{{ movie.title }}<br><b>Director : </b>{{ movie.director }}</li>
+{% endfor %}
+     </ul>
+  </body>
+</html>

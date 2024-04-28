@@ -1,0 +1,25 @@
+app_dir: "/app"
+app_files:
+  - "configuration.json"
+  - "app.conf"
+app_another_list:
+  - name: "Firstname"
+    lastname: "Lastname"
+app_packages:
+  - apache2
+  - php
+app_name: My Awesome Web App
+app_movies:
+  - title: "Inception"
+    director: "Christopher Nolan"
+  - title: "Interstellar"
+    director: "Christopher Nolan"
+  - title: "The Matrix"
+    director: "Lana Wachowski, Lilly Wachowski"
+    
+app_directory: "/var/www/html"
+app_services:
+  - apache2
+app_healthcheck_url: "http://{{ inventory_hostname }}/index.html"
+retry_interval: 10
+retry_count: 12

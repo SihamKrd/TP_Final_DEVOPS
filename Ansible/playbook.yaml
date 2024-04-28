@@ -1,0 +1,130 @@
+---
+- name: Installer Docker
+  hosts: servers
+  become: true
+  vars:
+    mariadb_root_password: "root"
+  tasks:
+    - name: Installer Docker
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+        state: present
+
+    - name: Installer le module python de Docker
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Installer le module Docker Python
+      pip:
+        name: docker
+
+    - name: Démarrer et activer le service Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+- name: Install MariaDBclient
+  hosts: servers
+  become: true
+  tasks:
+     - name: Install MariaDB client
+       apt:
+         name: mariadb-client
+         state: present
+
+- name: Setup Traefik
+  hosts: servers
+  become: true
+  tasks:
+    - name: Create Traefik configuration directory
+      ansible.builtin.file:
+        path: /opt/Docker
+        state: directory
+        mode: '0755'
+
+    - name: Copy Traefik configuration file
+      ansible.builtin.copy:
+        src: ./traefik.yaml
+        dest: /opt/Docker/traefik.yaml
+
+    - name: Ensure the letsencrypt directory exists
+      ansible.builtin.file:
+        path: /opt/Docker/letsencrypt
+        state: directory
+        mode: '0755'  # Définit les permissions du répertoire
+        owner: root   # Définit le propriétaire du répertoire
+        group: root   # Définit le groupe du répertoire
+
+    - name: Touch the acme.json file
+      ansible.builtin.file:
+        path: /opt/Docker/letsencrypt/acme.json
+        state: touch
+        mode: '0600'  # Définit les permissions du fichier
+        owner: root   # Définit le propriétaire du fichier
+        group: root   # Définit le groupe du fichier
+
+- name: Deploy Docker Compose
+  hosts: servers
+  become: true
+  tasks:
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: /opt/Docker
+        state: directory
+        mode: '0755'
+
+    - name: Copy Docker Compose file
+      ansible.builtin.copy:
+        src: ./docker-compose.yaml
+        dest: /opt/Docker/docker-compose.yaml
+    
+    - name: Copy initdb.sql file 
+      ansible.builtin.copy:
+        src: ./initdb.sql
+        dest: /opt/Docker/initdb.sql
+
+    - name: Copy Dockerfile
+      ansible.builtin.copy:
+        src: ./dockerfile
+        dest: /opt/Docker/dockerfile
+    
+    - name: Copy prometheus file
+      ansible.builtin.copy:
+        src: ./prometheus.yaml
+        dest: /opt/Docker/prometheus.yaml
+
+    - name: Deploy Docker Compose
+      ansible.builtin.shell:
+        cmd: docker-compose up -d
+        chdir: /opt/Docker
+
+
+- name: Inspect Docker network
+  hosts: servers
+  become: yes  # Active le mode sudo pour toutes les tâches
+  tasks:
+    - name: Inspect bridge network using Docker
+      ansible.builtin.shell:  # Utilise le module shell
+        cmd: docker network inspect bridge  # Commande à exécuter
+      register: result  # Enregistre la sortie dans une variable
+
+    - name: Print the output
+      ansible.builtin.debug:  # Affiche la sortie
+        msg: "{{ result.stdout }}"
+- name: List running Docker containers
+  hosts: servers
+  become: yes  # Active le mode sudo pour toutes les tâches
+  tasks:
+    - name: List active Docker containers
+      ansible.builtin.shell:  # Utilise le module shell
+        cmd: docker-compose ps # Commande à exécuter
+        chdir: "/opt/Docker"
+      register: docker_ps_output  # Enregistre la sortie dans une variable
+
+    - name: Print the list of running containers
+      ansible.builtin.debug:  # Affiche la sortie
+        msg: "{{ docker_ps_output.stdout_lines }}"

@@ -1,0 +1,23 @@
+FROM golang:1.19 as builder
+WORKDIR /app
+# Cloner le dépôt Git
+ARG GIT_REPO
+RUN git clone ${GIT_REPO} .
+#installer les dépendances
+RUN go mod download
+# Compiler l'application
+RUN go build -o ./app ./cmd
+
+FROM debian:bullseye
+
+# Installer les dépendances nécessaires pour l'exécution
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Copier l'exécutable du builder
+COPY --from=builder /app/app /app/app
+
+# Exposer le port sur lequel l'application écoute
+EXPOSE 8000
+
+# Commande pour démarrer l'application
+CMD ["/app/app"]
